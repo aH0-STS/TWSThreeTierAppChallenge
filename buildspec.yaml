@@ -63,7 +63,7 @@ phases:
 artifacts:
   base-directory: k8s-out
   files:
-    - '*.yaml'
+    - '**/*.yaml'
 
 cache:
   paths:
