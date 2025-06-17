@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    CLUSTER_NAME: three-tier-cluster
+    CLUSTER_NAME: eks-cluster-3Tier1
     REGION: us-east-1
     ACCOUNT_ID: 390403857216
     FRONTEND_REPO: frontend
