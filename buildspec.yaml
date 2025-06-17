@@ -42,7 +42,7 @@ phases:
       - docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
       - docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
 
-      - echo Replacing image placeholders and preparing manifests in root directory...
+      - echo Replacing image placeholders and preparing manifests in k8s-out directory...
 
       - mkdir -p k8s-out
 
@@ -60,10 +60,14 @@ phases:
       # Ingress manifest - copy directly to root of k8s-out
       - cp $K8S_MANIFEST_DIR/ingress.yaml k8s-out/
 
+      # Debug: List files to verify manifests exist
+      - echo "Contents of k8s-out directory:"
+      - ls -l k8s-out/
+
 artifacts:
   base-directory: k8s-out
   files:
-    - '**/*.yaml'
+    - '**/*.yaml'   # Include all yaml files inside k8s-out
 
 cache:
   paths:
