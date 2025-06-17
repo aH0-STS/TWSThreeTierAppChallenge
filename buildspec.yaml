@@ -62,7 +62,6 @@ phases:
       - cp k8s-out/Backend/deployment.yaml k8s-out/deployment-backend.yaml
       - cp k8s-out/Backend/service.yaml k8s-out/service-backend.yaml
       - cp k8s-out/Database/*.yaml k8s-out/
-      - cp k8s-out/ingress.yaml k8s-out/
 
 artifacts:
   base-directory: k8s-out
