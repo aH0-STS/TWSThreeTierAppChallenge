@@ -14,7 +14,6 @@ phases:
       - echo Logging into Amazon ECR...
       - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
       - echo Updating kubeconfig...
-      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $REGION
       - export IMAGE_TAG=v1.$CODEBUILD_BUILD_NUMBER
 
   build:
@@ -34,7 +33,6 @@ phases:
       - docker push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
 
       - echo Deploying manifests to EKS...
-      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $REGION
 
       # Deploy Database manifests
       - kubectl apply -f Kubernetes-Manifests-file/Database/
