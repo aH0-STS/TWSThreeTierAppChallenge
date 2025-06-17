@@ -56,8 +56,6 @@ phases:
       # --- DATABASE ---
       - cp $K8S_MANIFEST_DIR/Database/deployment.yaml k8s-out/database-deployment.yaml || true
       - cp $K8S_MANIFEST_DIR/Database/service.yaml k8s-out/database-service.yaml || true
-      - cp $K8S_MANIFEST_DIR/Database/pv.yaml k8s-out/database-pv.yaml || true
-      - cp $K8S_MANIFEST_DIR/Database/pvc.yaml k8s-out/database-pvc.yaml || true
       - cp $K8S_MANIFEST_DIR/Database/secrets.yaml k8s-out/database-secrets.yaml || true
 
       # --- INGRESS ---
