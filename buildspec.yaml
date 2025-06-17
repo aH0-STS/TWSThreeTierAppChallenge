@@ -1,61 +1,76 @@
 version: 0.2
-
+ 
 env:
   variables:
-    CLUSTER_NAME: eks-cluster-3Tier1
-    REGION: us-east-1
     ACCOUNT_ID: 390403857216
+    REGION: us-east-1
     FRONTEND_REPO: frontend
     BACKEND_REPO: backend
-
+    FRONTEND_DIR: Application-Code/frontend
+    BACKEND_DIR: Application-Code/backend
+    K8S_MANIFEST_DIR: Kubernetes-Manifests-file
+ 
 phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo Installing utilities...
+      - yum install -y jq
+ 
   pre_build:
     commands:
-      - echo Logging into Amazon ECR...
-      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
-      - echo Updating kubeconfig...
-      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $REGION
-      - export IMAGE_TAG=v1.$CODEBUILD_BUILD_NUMBER
-
+      - echo Setting dynamic image tag...
+      - export IMAGE_TAG=v1.${CODEBUILD_BUILD_NUMBER}
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
+      - echo Installing frontend and backend dependencies...
+      - cd $FRONTEND_DIR && npm install && cd -
+      - cd $BACKEND_DIR && npm install && cd -
+ 
   build:
     commands:
-      - echo Building frontend image...
-      - docker build -t $FRONTEND_REPO:$IMAGE_TAG Application-Code/frontend
-      - docker tag $FRONTEND_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
-
-      - echo Building backend image...
-      - docker build -t $BACKEND_REPO:$IMAGE_TAG Application-Code/backend
-      - docker tag $BACKEND_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
-
+      - echo Building Docker images...
+      - docker build -t $FRONTEND_REPO:$IMAGE_TAG $FRONTEND_DIR
+      - docker tag $FRONTEND_REPO:$IMAGE_TAG ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
+      - docker build -t $BACKEND_REPO:$IMAGE_TAG $BACKEND_DIR
+      - docker tag $BACKEND_REPO:$IMAGE_TAG ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
+ 
   post_build:
     commands:
-      - echo Pushing images to ECR...
-      - docker push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
-      - docker push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
-
-      - echo Deploying manifests to EKS...
-
-      - echo "Listing Database manifests:"
-      - ls -l Kubernetes-Manifests-file/Database/
-
-      # Deploy Database manifests one-by-one with logging
-      - |
-        for file in Kubernetes-Manifests-file/Database/*.yaml; do
-          echo "Applying $file"
-          kubectl apply -f "$file" || exit 1
-        done
-
-      # Deploy Backend manifests
-      - kubectl apply -f Kubernetes-Manifests-file/Backend/deployment.yaml
-      - kubectl apply -f Kubernetes-Manifests-file/Backend/service.yaml
-
-      # Deploy Frontend manifests
-      - kubectl apply -f Kubernetes-Manifests-file/Frontend/deployment.yaml
-      - kubectl apply -f Kubernetes-Manifests-file/Frontend/service.yaml
-
-      # Deploy Ingress manifest
-      - kubectl apply -f Kubernetes-Manifests-file/ingress.yaml
-
+      - echo Pushing Docker images to ECR...
+      - docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG
+      - docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG
+ 
+      - echo Replacing image placeholders in Kubernetes manifests...
+      - mkdir -p k8s-out/Frontend k8s-out/Backend k8s-out/Database
+ 
+      # Frontend
+      - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/$FRONTEND_REPO:$IMAGE_TAG|g" $K8S_MANIFEST_DIR/Frontend/deployment.yaml > k8s-out/Frontend/deployment.yaml
+      - cp $K8S_MANIFEST_DIR/Frontend/service.yaml k8s-out/Frontend/service.yaml
+ 
+      # Backend
+      - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/$BACKEND_REPO:$IMAGE_TAG|g" $K8S_MANIFEST_DIR/Backend/deployment.yaml > k8s-out/Backend/deployment.yaml
+      - cp $K8S_MANIFEST_DIR/Backend/service.yaml k8s-out/Backend/service.yaml
+ 
+      # Database (static YAMLs)
+      - cp $K8S_MANIFEST_DIR/Database/*.yaml k8s-out/Database/
+ 
+      # Ingress
+      - cp $K8S_MANIFEST_DIR/ingress.yaml k8s-out/
+ 
+      # Flatten all files into root directory for easy deployment
+      - echo Copying all Kubernetes manifests to root of k8s-out...
+      - cp k8s-out/Frontend/*.yaml k8s-out/
+      - cp k8s-out/Backend/*.yaml k8s-out/
+      - cp k8s-out/Database/*.yaml k8s-out/
+ 
 artifacts:
+  base-directory: k8s-out
   files:
     - '**/*'
+ 
+cache:
+  paths:
+    - 'Application-Code/frontend/node_modules/**/*'
+    - 'Application-Code/backend/node_modules/**/*'
