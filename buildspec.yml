@@ -4,8 +4,8 @@ env:
   variables:
     ACCOUNT_ID: 522814735019
     REGION: us-east-1
-    FRONTEND_REPO: three-tier-frontend
-    BACKEND_REPO: three-tier-backend
+    FRONTEND_REPO: pavanspring
+    BACKEND_REPO: pavanspring
     FRONTEND_DIR: Application-Code/frontend
     BACKEND_DIR: Application-Code/backend
     K8S_MANIFEST_DIR: Kubernetes-Manifests-file
