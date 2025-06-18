@@ -35,11 +35,7 @@ phases:
     commands:
       - echo Running SonarQube analysis...
       - cd $BACKEND_DIR
-      - sonar-scanner \
-          -Dsonar.projectKey=indian \
-          -Dsonar.sources=. \
-          -Dsonar.host.url=http://184.72.206.70 \
-          -Dsonar.login=sqp_84c96ded5db9b13c01ab9d3f5bba6e4c934e6601
+      - sonar-scanner -Dsonar.projectKey=indian -Dsonar.sources=. -Dsonar.host.url=http://184.72.206.70 -Dsonar.login=sqp_84c96ded5db9b13c01ab9d3f5bba6e4c934e6601
       - cd -
       - echo Building Docker images...
       - docker build -t $FRONTEND_REPO:$IMAGE_TAG $FRONTEND_DIR
