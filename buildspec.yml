@@ -2,10 +2,10 @@ version: 0.2
 
 env:
   variables:
-    ACCOUNT_ID: 522814735019
+    ACCOUNT_ID: 390403857216
     REGION: us-east-1
-    FRONTEND_REPO: three-tier-front-end
-    BACKEND_REPO: three-tier-back-end
+    FRONTEND_REPO: frontend
+    BACKEND_REPO: backend
     FRONTEND_DIR: Application-Code/frontend
     BACKEND_DIR: Application-Code/backend
     K8S_MANIFEST_DIR: Kubernetes-Manifests-file
@@ -22,8 +22,13 @@ phases:
     commands:
       - echo Setting dynamic image tag...
       - export IMAGE_TAG=v1.${CODEBUILD_BUILD_NUMBER}
+
+      - echo Logging in to Docker Hub...
+      - echo $DOCKERHUB_PASSWORD | docker login --username $DOCKERHUB_USERNAME --password-stdin
+
       - echo Logging in to Amazon ECR...
       - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
+
       - echo Installing frontend and backend dependencies...
       - cd $FRONTEND_DIR && npm install && cd -
       - cd $BACKEND_DIR && npm install && cd -
