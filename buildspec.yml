@@ -2,10 +2,10 @@ version: 0.2
 
 env:
   variables:
-    ACCOUNT_ID: 390403857216
+    ACCOUNT_ID: 522814735019
     REGION: us-east-1
-    FRONTEND_REPO: frontend
-    BACKEND_REPO: backend
+    FRONTEND_REPO: three-tier-front-end
+    BACKEND_REPO: three-tier-back-end
     FRONTEND_DIR: Application-Code/frontend
     BACKEND_DIR: Application-Code/backend
     K8S_MANIFEST_DIR: Kubernetes-Manifests-file
